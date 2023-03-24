@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.javawspring.dao.QnaDAO">
+  <select id="totRecCnt" resultType="int">
+    <if test="part == '전체'">
+      <if test="mid =='admin'">
+        select count(*) from qna;
+      </if>
+      <if test="mid !='admin'">
+        select count(*) from qna where mid=#{mid};
+      </if>
+    </if>
+    <if test="part != '전체'">
+      <if test="mid =='admin'">
+        select count(*) from qna where part = #{part};
+      </if>
+      <if test="mid !='admin'">
+        select count(*) from qna where part = #{part} and mid=#{mid};
+      </if>
+    </if>
+  </select>
+  
+  <select id="getQnaList" resultType="com.spring.javawspring.vo.QnaVO">
+    select *, cast(timestampdiff(minute, wDate, now())/60 as signed integer) as diffTime from qna order by qnaIdx desc, idx desc limit #{startIndexNo},#{pageSize};
+  </select>
+  
+   <select id="getInquiryView" resultType="com.spring.javawspring.vo.QnaVO">
+    select * from qna where idx = #{idx};
+  </select>
+  
+  <select id="getInquiryReply" resultType="com.spring.javawspring.vo.QnaReplyVO">
+    select * from QnaReply where qnaIdx = #{idx};
+  </select>
+  
+  <select id="getCountIdx" resultType="int">
+  	select count(idx) from qna;
+  </select>
+  
+  <select id="getMaxIdx" resultType="int">
+  	select Max(idx) from qna;
+  </select>
+  <select id="getQnaContent" resultType="com.spring.javawspring.vo.QnaVO">
+    select * from qna where idx = #{idx};
+  </select>
+  
+  
+  
+  
+  <insert id="qnaInputOk">
+    insert into qna values (default,#{vo.qnaIdx},#{vo.mid},#{vo.nickName},#{vo.title},#{vo.content},#{vo.pwd},#{vo.fName},#{vo.fSName},default,default,default,#{vo.part});
+  </insert>
+  
+  
+  
+  
+  <delete id="setQnaDelete">
+    delete from qna where idx = #{idx};
+  </delete>
+</mapper>

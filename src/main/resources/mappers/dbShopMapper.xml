@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.javawspring.dao.DbShopDAO">
+	<!-- 대분류 중복 조회 -->
+	<select id="getCategoryMainOne" resultType="com.spring.javawspring.vo.DbProductVO">
+    select * from categoryMain where categoryMainCode = #{categoryMainCode} or categoryMainName = #{categoryMainName};
+  </select>
+  
+	<select id="totProductListRecCnt" resultType="int">
+    select count(*) from dbShopNotice <if test="part != '전체'"> where part = #{part}</if>;
+  </select>
+  
+	<!-- 소분류 등록 조회  -->
+  <select id="getCategorySubOne" resultType="com.spring.javawspring.vo.DbProductVO">
+  	<if test="vo.categorySubCode == ''">
+      select * from categorySub where categoryMainCode = #{vo.categoryMainCode};	<!-- 대분류삭제 시에 중분류에 내용이 있는 지를 체크 -->
+    </if>
+    <if test="vo.categorySubCode != ''">
+      select *
+      from categorySub
+      where categorySubCode = #{vo.categorySubCode}; 
+    </if>
+  </select>
+  
+  <!-- 대분류 전체 조회 -->
+  <select id="getCategoryMain" resultType="com.spring.javawspring.vo.DbProductVO">
+    select * from categoryMain order by categoryMainCode desc;
+  </select>
+  
+  <!-- 소분류 전체 조회 -->
+  <select id="getCategorySub" resultType="com.spring.javawspring.vo.DbProductVO">
+  	select sub.*, main.categoryMainName as categoryMainName 
+  	from categorySub sub, categoryMain main
+  	where sub.categoryMainCode=main.categoryMainCode
+  	order by sub.categorySubCode desc;
+  </select>
+  
+  <!-- 대분류 선택 시 소분류 뿌리기 -->
+  <select id="getCategorySubName" resultType="com.spring.javawspring.vo.DbProductVO">
+  	select * from categorySub where categoryMainCode = #{categoryMainCode}; 
+  </select>
+  
+  <!-- 먼저 productCode를 만들어주기 위해 지금까지 작업된 dbProduct테이블의 idx필드중 최대값을 읽어온다. 없으면 0으로 처리한다. -->
+  <select id="getProductMaxIdx" resultType="com.spring.javawspring.vo.DbProductVO">
+  	select * from dbProduct order by idx desc limit 1;
+  </select>
+  
+  <!-- 소분류 선택 시 상품이름 꺼내오기 -->
+  <select id="getCategoryProductName" resultType="com.spring.javawspring.vo.DbProductVO">
+  	select * from dbProduct 
+  	where categoryMainCode =#{categoryMainCode} and categorySubCode = #{categorySubCode};
+  </select>
+  
+  
+  <!-- 대분류 / 소분류 / 상품이름 선택하면 상품이름 가격 가져오기  -->
+  <select id="getProductInfor" resultType="com.spring.javawspring.vo.DbProductVO">
+  	select *, main.categoryMainName, sub.categorySubName 
+  	from dbProduct product, categoryMain main , categorySub sub
+  	where productName = #{productName} order by idx limit 1;
+  </select>
+  
+  
+  <!-- 파트별로 분류하기위한 소분류 가져오기 -->
+	<select id="getSubTitle" resultType="com.spring.javawspring.vo.DbProductVO">
+  	select categorySubName from categorySub group by categorySubName order by categorySubName;
+  </select>
+  
+  
+	<!-- 상품리스트 파트별로 분리하기  -->  
+  <select id="getDbShopList" resultType="com.spring.javawspring.vo.DbProductVO">
+    <if test='part == "전체"'>
+  		select p.idx,p.categorySubCode,p.productName as productName,p.mainPrice as mainPrice,p.fSName
+			,(select count(*) from review where productIdx=p.idx) as reviewCount from dbProduct p order by p.idx desc limit #{startIndexNo},#{pageSize};
+  	</if>
+     <if test='part != "전체"'>
+			select product.*, sub.categorySubName from dbProduct product, categorySub sub 
+ 			where sub.categorySubName = #{part} and substring(product.productCode,2,2)=sub.categorySubCode order by FDate desc limit #{startIndexNo},#{pageSize} ;
+  	</if>                                                  <!--  porductCode :  상품고유코드(대분류코드+소코드+고유번호) -->
+  </select>
+  
+	<!-- 상품리스트 등록순 정렬  -->  
+  <select id="getDbShopListDate" resultType="com.spring.javawspring.vo.DbProductVO">
+    <if test='part == "전체"'>
+  		select * from dbProduct order by FDate desc;
+  	</if>
+    <if test='part != "전체"'>
+  		select product.*, sub.categorySubName from dbProduct product, categorySub sub 
+  		  where sub.categorySubName = #{part} and substring(product.productCode,2,2)=sub.categorySubCode order by FDate desc;
+  	</if>                                                  <!--  porductCode :  상품고유코드(대분류코드+소코드+고유번호) -->
+  </select>
+  
+  <!-- 상품콘텐츠 꺼내기 -->
+  <select id="getDBShopProduct" resultType="com.spring.javawspring.vo.DbProductVO">
+  	select * from dbProduct where idx = #{idx};
+  </select>
+   
+  <select id="getOptionList" resultType="com.spring.javawspring.vo.DbOptionVO">
+  	select * from dbOption where productIdx = #{productIdx} order by optionName;
+  </select>
+  
+  <!-- 옵션 중복 검색  -->
+  <select id="getOptionSame" resultType="int">
+  	select count(*) from dbOption where productIdx=#{productIdx} and optionName=#{optionName};
+  </select>
+  
+  <!-- 옵션 꺼내기  -->
+  <select id="getDbShopOption" resultType="com.spring.javawspring.vo.DbOptionVO">
+  	select * from dbOption where productIdx = #{productIdx} order by idx;
+  </select>
+  
+  <!-- 장바구니 조회 -->
+  <select id="getDbCartList" resultType="com.spring.javawspring.vo.DbCartVO">
+  	select * from dbCart where mid = #{mid};
+  </select>
+  
+  <!-- 사용자가 기존에 장바구니에 담은 적 이 있는 품목(기본+옵션)의 정보 -->
+  <select id="getDbCartProductOptionSearch" resultType="com.spring.javawspring.vo.DbCartVO">
+  	select * from dbCart where productName = #{productName} and optionName = #{optionName} and mid = #{mid} ;
+  </select>
+    
+  <select id="getCartIdx" resultType="com.spring.javawspring.vo.DbCartVO">
+  	select * from dbCart where idx = #{idx};
+  </select>
+  
+  <!-- DBOrderVO -->
+  <select id="getOrderMaxIdx" resultType="com.spring.javawspring.vo.DbOrderVO">
+  	select max(idx) as maxIdx from dbOrder;
+  </select>
+  
+  <!-- 나의 배송정보확인 -->
+ 	<select id="getOrderBaesong" resultType="com.spring.javawspring.vo.DbBaesongVO">
+    select * from dbBaesong where orderIdx = #{orderIdx};
+  </select>
+  
+  <!-- 나의 배송 날짜별 조회  -->
+  <select id="getMyOrderList" resultType="com.spring.javawspring.vo.DbBaesongVO">
+    <if test='mid == "전체"'>
+      SELECT oder.*,baesong.* 
+      from dbOrder oder join dbBaesong baesong using(orderIdx) 
+      where date(orderDate) = substring(now(),1,10)
+      order by baesong.idx desc limit #{startIndexNo},#{pageSize};
+    </if>
+    <if test='mid != "전체"'>
+      SELECT oder.*,baesong.* 
+      from dbOrder oder join dbBaesong baesong using(orderIdx) 
+      where baesong.mid=#{mid} and date(orderDate) = substring(now(),1,10)
+      order by baesong.idx desc limit #{startIndexNo},#{pageSize};
+    </if>
+  </select>
+  
+  <!-- 냐 -->
+  <select id="getMyOrderStatus" resultType="com.spring.javawspring.vo.DbBaesongVO">
+    <if test="conditionOrderStatus == '전체'">
+      SELECT o.*,b.* 
+      from dbOrder o join dbBaesong b using(orderIdx) 
+      <![CDATA[ where b.mid=#{mid} and date(orderDate) >= date(#{startJumun}) and date(orderDate) <= date(#{endJumun}) ]]> 
+      order by b.idx desc 
+      limit #{startIndexNo},#{pageSize};
+     </if>
+    <if test="conditionOrderStatus != '전체'">
+      SELECT o.*,b.* 
+      from dbOrder o join dbBaesong b using(orderIdx) 
+      <![CDATA[ where b.mid=#{mid} and date(orderDate) >= date(#{startJumun}) and date(orderDate) <= date(#{endJumun}) and b.orderStatus=#{conditionOrderStatus} ]]> 
+      order by b.idx desc
+      limit #{startIndexNo},#{pageSize};
+    </if>
+  </select>    
+  
+    
+  <select id="totRecCntAdminStatus" resultType="int">
+    <if test="orderStatus == '전체'">
+      select count(*) from dbOrder a join dbBaesong b using(orderIdx) <![CDATA[ where date(orderDate) >= date(#{startJumun}) and date(orderDate) <= date(#{endJumun}) order by orderDate desc ]]>;
+    </if>
+    <if test="orderStatus != '전체'">
+      select count(*) from dbOrder a join dbBaesong b using(orderIdx) <![CDATA[ where date(orderDate) >= date(#{startJumun}) and date(orderDate) <= date(#{endJumun}) and b.orderStatus=#{orderStatus} order by orderDate desc ]]>;
+    </if>
+  </select>  
+  
+  <select id="totRecCntMyOrderStatus" resultType="int">
+    <if test="mid == '전체'">
+      SELECT count(*) from dbOrder;
+    </if>
+    <if test="mid != '전체' and conditionOrderStatus == '전체'">
+        SELECT count(*)
+        from dbOrder a join dbBaesong b using(orderIdx) 
+        <![CDATA[ where b.mid=#{mid} and date(orderDate) >= date(#{startJumun}) and date(orderDate) <= date(#{endJumun}) order by orderDate desc ]]>;
+    </if>
+    <if test="mid != '전체' and conditionOrderStatus != '전체'">
+        SELECT count(*)
+        from dbOrder a join dbBaesong b using(orderIdx) 
+        <![CDATA[ where b.mid=#{mid} and date(orderDate) >= date(#{startJumun}) and date(orderDate) <= date(#{endJumun}) and b.orderStatus=#{conditionOrderStatus} order by orderDate desc ]]>;
+    </if>
+  </select>  
+
+	<select id="totRecCnt" resultType="int">
+    <if test='mid == "전체"'>
+      select count(*) from dbOrder
+      where date(orderDate) = substring(now(),1,10);
+    </if>
+    <if test='mid != "전체"'>
+      select count(baesong.idx) from dbOrder oder join dbBaesong baesong using(orderIdx), member member
+      where member.mid = #{mid} and date(orderDate) = substring(now(),1,10);
+    </if>
+  </select>  
+  
+  <!-- 주소록위해 배송vo 호출  -->
+  <select id="getDbBaesongList" resultType="com.spring.javawspring.vo.DbBaesongVO">
+ 		select * from dbBaesong where mid = #{mid};
+  </select>
+  
+  <!-- 숍 공지사항 페이징처리위한 전체 건수 구하기  -->
+  <select id="dbShopNoticetotRecCnt" resultType="int">
+ 		select count(*) from dbShopNotice <if test="part != '전체'"> where part = #{part} </if>;
+  </select>
+	
+	<!-- 시 -->  
+	<select id="getdbShopNoticeList" resultType="com.spring.javawspring.vo.DbShopNoticeVO">
+		SELECT 	*,datediff(now(), startDate) as day_diff, timestampdiff(hour, startDate, now()) as hour_diff FROM dbShopNotice <if test="part != '전체'"> where part=#{part} </if> order by idx desc limit #{startIndexNo},#{pageSize};
+	</select>  
+	
+	<select id="getShopNoticeContent" resultType="com.spring.javawspring.vo.DbShopNoticeVO">
+  	select * from dbShopNotice where idx = #{idx};
+  </select>
+  
+  <!-- 리뷰 중복체크 -->
+	<select id="getReviewCheck" resultType="int">
+  	select count(*) from dbOrder where productIdx=#{productIdx} and mid=#{mid} and orderIdx = #{orderIdx};
+  </select>
+  
+  <!-- 쿠폰 다운 체크 -->
+	<select id="getCouponDownCheck" resultType="int">
+  	select count(*) from couponDown where couponId = #{idx} and mid=#{mid};
+  </select>
+  
+  <!-- 위시리스트 중복 체크 -->
+	<select id="getWishListCheck" resultType="int">
+  	select count(*) from wishList where productIdx = #{idx} and mid=#{mid};
+  </select>
+  
+  <!-- 리뷰리스트 -->
+	<select id="getReviewList" resultType="com.spring.javawspring.vo.ReviewVO">
+  	select * from review where productIdx =  #{productIdx} order by good desc;
+  </select>
+  
+  <!-- 쿠폰리스트뿌리기 -->
+	<select id="getCouponList" resultType="com.spring.javawspring.vo.CouponIssueVO">
+  	select * from couponIssue;
+  </select>
+  
+  <!-- 주문에서 내가 가지고있는 쿠폰 확인 -->
+	<select id="getCouponDownList" resultType="com.spring.javawspring.vo.CouponDownVO">
+  	select * from couponDown where mid = #{mid};
+  </select>
+  
+  <!-- 리플달렸으면 알림 -->
+	<select id="getReplyCnt" resultType="int">
+			select count(*) from qna where mid = #{mid} and reply = '미답변';
+  </select>
+  
+  <!-- 위시리스트 -->
+	<select id="getWishList" resultType="com.spring.javawspring.vo.DbProductVO">
+			select p.*, w.mid from dbProduct p join wishList w on p.idx = w.productIdx where w.mid = #{mid} order by w.idx desc;
+  </select>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+<!-- 대분류 등록 -->
+	<insert id="setCategoryMainInput">
+    insert into categoryMain values (#{vo.categoryMainCode}, #{vo.categoryMainName});
+  </insert>
+  
+<!-- 소분류 등록 -->
+  <insert id="setCategorySubInput">
+   insert into categorySub values (#{vo.categoryMainCode}, #{vo.categorySubCode}, #{vo.categorySubName});
+  </insert>
+  
+ <!-- 상품 등록 -->
+  <insert id="setDbProductInput">
+    insert into dbProduct values
+    (#{vo.idx},#{vo.categoryMainCode},#{vo.categorySubCode},#{vo.productCode},#{vo.productName},#{vo.mainPrice},#{vo.fSName},#{vo.content},default,default,default,default);
+  </insert>
+  
+ <!-- 옵션 등록 -->
+  <insert id="setDbOptionInput">
+    insert into dbOption values
+    (default,#{vo.productIdx},#{vo.optionName},#{vo.optionPrice});
+  </insert>
+  
+  <insert id="dbShopCartInput">
+ 	 insert into dbCart values 
+ 	 (default,default,#{vo.mid},#{vo.productIdx},#{vo.productName},#{vo.mainPrice},#{vo.thumbImg},#{vo.optionIdx},#{vo.optionName},#{vo.optionPrice},#{vo.optionNum},#{vo.totalPrice});
+  </insert>
+  
+  <!-- 배송지저장 -->
+  <insert id="setDbBaesong">
+    insert into dbBaesong values (default,#{baesongVo.oIdx},#{baesongVo.orderIdx},#{baesongVo.orderTotalPrice},#{baesongVo.mid},#{baesongVo.name},#{baesongVo.address},#{baesongVo.tel},#{baesongVo.message},#{baesongVo.payment},#{baesongVo.payMethod},default);
+  </insert>  
+  
+  <!-- 주문저장하기 -->
+  <insert id="setDbOrder">
+    insert into dbOrder values (default,#{vo.orderIdx},#{vo.mid},#{vo.productIdx},default,#{vo.productName},#{vo.mainPrice},#{vo.thumbImg},#{vo.optionName},#{vo.optionPrice},#{vo.optionNum},#{vo.totalPrice},default);
+  </insert>
+  
+  <!-- 숍공지사항작성 -->
+  <insert id="setDbShopList">
+    insert into dbShopNotice values (default,#{vo.title},#{vo.content},default,#{vo.part});
+  </insert>
+  
+  <!-- 리뷰작성하기 -->
+  <insert id="setReviewInput">
+    insert into review values (default,#{vo.orderIdx},#{vo.productIdx},#{vo.mid},#{vo.nickName},#{vo.title},#{vo.content},default,#{vo.good},#{vo.fName},#{vo.fSName});
+  </insert>
+  
+  <!-- 쿠폰생성 -->
+  <insert id="couponInput">
+    insert into couponIssue values (default,#{vo.cName},#{vo.cPrice},default,#{vo.cStartDate},#{vo.cEndDate},#{vo.mid},#{vo.productIdx},#{vo.qrCode},#{vo.bigo});
+  </insert>
+  
+  <!-- 쿠폰다운 -->
+  <insert id="setCouponDown">
+    insert into couponDown values (default,#{couponDownVo.couponId},#{couponDownVo.cName},#{couponDownVo.cPrice},default,default,#{couponDownVo.cLevel},default,#{couponDownVo.mid});
+  </insert>
+  
+  <!-- 위시리스트 저장 -->
+  <insert id="setWishListInput">
+    insert into wishList values (default, #{wishListVo.mid} , #{wishListVo.productIdx});
+  </insert>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <!-- 기존 장바구니에 존재하는 상품이면 update처리 -->
+  <update id="dbShopCartUpdate">
+		update dbCart set optionNum = #{vo.optionNum} , totalPrice = totalPrice + #{vo.totalPrice} 
+		where productName = #{vo.productName} and optionName = #{vo.optionName};
+	</update>
+  
+  <!-- 주문하면 아이디에 포인트 증가시키기 -->
+  <update id="setMemberPointPlus">
+    update member set point = point + #{point} where mid = #{mid};
+  </update>
+  
+  <!-- 주문하면 상품에 판매수+1 증가시키기 -->
+  <update id="setProductSellPlus">
+    update dbProduct set sell = sell + 1  where productName = #{productName};
+  </update>
+  
+  <update id="setBoardUpdateOk">
+  	update dbShopNotice set title=#{vo.title}, content=#{vo.content},part=#{vo.part}  where idx = #{vo.idx};
+  </update>
+  
+  <!-- 리뷰가 작성되었으면 order의 status 바꾸기 -->
+  <update id="setReviewStatusChange">
+  	update dbBaesong set orderStatus = '리뷰작성완료' where mid = #{mid} and orderIdx = #{orderIdx};
+  </update>
+  
+  <!-- 리뷰가 작성되었으면 order의 status 바꾸기 -->
+  <update id="setdbOrderReviewStatusChange">
+  	update dbOrder set orderStatus = '리뷰작성완료' where productIdx = #{productIdx} and mid = #{mid} and orderIdx = #{orderIdx};
+  </update>
+  
+  <!-- 리뷰에 좋아요 수 증가시키기 -->
+  <update id="setReviewGoodPlus">
+  	update review set good = good + 1 where idx = #{idx}
+  </update>
+  
+  
+  
+    
+  <delete id="dbCartDelete">
+  	delete from dbCart where idx = #{idx};
+  </delete>
+  
+  <!-- 주문이 완료되면 카트 전체 삭제하기 -->
+  <delete id="dbCartDeleteAll">
+    delete from dbCart where idx = #{idx};
+  </delete>  
+  
+  <delete id="setdbShopNoticeDeleteOk">
+    delete from dbShopNotice where idx = #{idx};
+  </delete>
+    
+  <delete id="wishDelete">
+    DELETE FROM wishlist WHERE productIdx IN (SELECT idx FROM dbProduct WHERE productIdx = #{productIdx});
+  </delete>
+  
+</mapper>

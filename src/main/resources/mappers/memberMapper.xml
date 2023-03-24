@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.javawspring.dao.MemberDAO">
+  <select id="getMemberIdCheck" resultType="com.spring.javawspring.vo.MemberVO">
+  	select * from member where mid = #{mid};
+  </select>
+  
+  <select id="getMemberNickNameCheck" resultType="com.spring.javawspring.vo.MemberVO">
+  	select * from member where nickName = #{nickName};
+  </select>
+  
+  <select id="getMemberIdSearch" resultType="com.spring.javawspring.vo.MemberVO">
+  	select * from member where email = #{email};
+  </select>
+  
+  <select id="totRecCnt" resultType="int">
+  	select count(*) from member <if test="mid != ''"> where mid like concat('%',#{mid},'%') </if>;
+  </select>
+  
+  <select id="getMemberList" resultType="com.spring.javawspring.vo.MemberVO">
+  	select * from member <if test="mid != ''"> where mid like concat('%',#{mid},'%') </if> order by idx desc limit #{startIndexNo},#{pageSize};
+  </select>
+  
+  <select id="totTermRecCnt" resultType="int">
+  	select count(*) from member <if test="mid != ''"> where mid like concat('%',#{mid},'%') </if>;
+  </select>
+  
+  <select id="getTermMemberList" resultType="com.spring.javawspring.vo.MemberVO">
+    <!--  
+  	<if test="mid == ''">
+  		select * from member order by idx desc limit #{startIndexNo},#{pageSize};
+  	</if>
+  	<if test="mid != ''">
+  		select * from member where mid like concat('%',#{mid},'%') order by idx desc limit #{startIndexNo},#{pageSize};
+  	</if>
+  	-->
+ 		select * from member <if test="mid != ''"> where mid like concat('%',#{mid},'%') </if> order by idx desc limit #{startIndexNo},#{pageSize};
+  </select>
+  
+  <select id="getMemberNickNameEmailCheck" resultType="com.spring.javawspring.vo.MemberVO">
+  	select * from member where nickName = #{nickName} and email = #{email};
+  </select>
+  
+    <select id="getRecentlyVisitCount" resultType="com.spring.javawspring.vo.MemberVO">
+    <if test="i == 1">
+    	select substring(visitDate,1,10) as visitDate,visitCount from visit order by visitDate desc limit 7;
+    </if>
+    <if test="i == 2">
+	    select mid as lastDate,visitCnt as visitCnt from member order by visitCnt desc limit 7;
+    </if>
+  </select>
+  
+  <select id="getMemberIdVisitCnt" resultType="com.spring.javawspring.vo.MemberVO">
+  	select * from member where mid = #{mid} order by visitCnt limit 7 ;
+  </select>
+  
+  <select id="getNewMember" resultType="com.spring.javawspring.vo.MemberVO">
+  	select * from member order by startDate desc;
+  </select>
+  
+  <select id="getTotalPriceSum" resultType="int">
+  	select sum(totalPrice) from dborder where orderdate > date_add(now(),interval -7 day);
+  </select>
+  
+  <select id="getTotalOrder" resultType="int">
+  	select count(*) from dborder where idx;
+  </select>
+  
+  <select id="getMemberCnt" resultType="int">
+  	select count(*) from member;
+  </select>
+  
+  <select id="getNoreply" resultType="int">
+  	select count(*) from qna where reply = '미답변';
+  </select>
+  
+  
+  
+  
+	<!-- UPDATE -->
+	<update id="setMemberUpdateOk">
+  	update member set nickName=#{vo.nickName},email=#{vo.email} where mid=#{vo.mid};
+  </update>
+  
+  <update id="setMemTotalUpdate">
+  	update member set lastDate=now(), todayCnt=#{todayCnt}, visitCnt=visitCnt+1, point=#{nowTodayPoint} where mid = #{mid};
+  </update>
+  
+  <update id="setMemberPwdUpdate">
+  	update member set pwd = #{pwd} where mid = #{mid};
+  </update>
+  
+  <update id="setMemberDeleteOk">
+  	update member set userDel='OK' where mid = #{mid};
+  </update>
+  
+  <update id="setMemberUserDelCheck">
+  	update member set userDel='NO' where mid = #{mid};
+  </update>
+  
+  
+  
+  <insert id="setMemberJoinOk">
+  	insert into member values (default,#{vo.mid},#{vo.pwd},#{vo.nickName},#{vo.email},default,default,default,default,default,default,default);
+  </insert>
+  
+  <insert id="setKakaoMemberInputOk">
+  	insert into member values (default,#{mid},#{pwd},#{nickName},#{email},default,default,default,default,default,default,default);
+  </insert>
+  
+</mapper>

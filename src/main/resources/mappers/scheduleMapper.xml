@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.javawspring.dao.ScheduleDAO">
+  <select id="getScheduleList" resultType="com.spring.javawspring.vo.ScheduleVO">
+  	select sDate,part from schedule2 where mid=#{mid} and date_format(sDate, '%Y-%m')=#{ym} order by sDate, part;
+  </select>
+  
+  <select id="getScheduleMenu" resultType="com.spring.javawspring.vo.ScheduleVO">
+  	select * from schedule2 where mid=#{mid} and date_format(sDate, '%Y-%m-%d')=#{ymd};
+  </select>
+  
+  <update id="setScheduleUpdateOk">
+  	update schedule2 set part = #{vo.part}, content = #{vo.content} where idx = #{vo.idx};
+  </update>
+  
+  
+  <insert id="setScheduleInputOk">
+    insert into schedule2 values (default, #{vo.mid}, #{vo.ymd}, #{vo.part}, #{vo.content});
+  </insert>
+  
+  
+  <delete id="setScheduleDeleteOk">
+    delete from schedule2 where idx = #{idx};
+  </delete>
+
+  
+</mapper>

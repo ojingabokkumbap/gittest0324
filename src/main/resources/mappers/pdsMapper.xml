@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.javawspring.dao.PdsDAO">
+	<select id="totRecCnt" resultType="int">
+		select count(*) from pds2 <if test="part != '전체'"> where part = #{part} </if>;
+	</select>
+	
+	<select id="getPdsList" resultType="com.spring.javawspring.vo.PdsVO">
+		<!-- select * from pds2 <if test="part != '전체'"> where part = #{part} </if> order by idx desc limit #{startIndexNo},#{pageSize}; -->
+		SELECT 	*,datediff(now(), fDate) as day_diff, timestampdiff(hour, fDate, now()) as hour_diff FROM pds2 <if test="part != '전체'"> where part=#{part} </if> order by idx desc limit #{startIndexNo},#{pageSize};
+	</select>
+	
+	<select id="getPdsContent" resultType="com.spring.javawspring.vo.PdsVO">
+		select * from pds2 where idx = #{idx};
+	</select>
+  
+  <update id="setPdsDownNum">
+    update pds2 set downNum = downNum + 1 where idx = #{idx};
+  </update>
+  
+  
+  <insert id="setPdsInput">
+    insert into pds2 values (default,#{vo.mid},#{vo.nickName},#{vo.FName},#{vo.FSName},#{vo.FSize},#{vo.title},#{vo.part},#{vo.pwd},default,default,#{vo.openSw},#{vo.content},#{vo.hostIp});
+  </insert>
+  
+  <delete id="setPdsDelete">
+  	delete from pds2 where idx = #{idx};
+  </delete>
+ 
+</mapper>

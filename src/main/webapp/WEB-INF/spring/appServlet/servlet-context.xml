@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+	<!-- DispatcherServlet Context: defines this servlet's request-processing infrastructure -->
+	
+	<!-- Enables the Spring MVC @Controller programming model -->
+	<annotation-driven />
+
+	<!-- Handles HTTP GET requests for /resources/** by efficiently serving up static resources in the ${webappRoot}/resources directory -->
+	<resources mapping="/resources/**" location="/resources/" />
+	<resources mapping="/js/**" location="/resources/js/" />
+	<resources mapping="/font/**" location="/resources/font/" />
+	<resources mapping="/css/**" location="/resources/css/" />
+	<resources mapping="/images/**" location="/resources/images/" />
+	<resources mapping="/board/**" location="/resources/data/board/" />
+	<resources mapping="/pds/**" location="/resources/pds/" />
+	<resources mapping="/member/**" location="/resources/member/" />
+	<resources mapping="/ckeditor/**" location="/resources/ckeditor/" />
+	<resources mapping="/data/**" location="/resources/data/" />
+	<resources mapping="/dbShop/**" location="/resources/data/dbShop" />
+
+	<!-- Resolves views selected for rendering by @Controllers to .jsp resources in the /WEB-INF/views directory -->
+	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
+	
+	<context:component-scan base-package="com.spring.javawspring" />
+	
+	<!-- BCryptPasswordEncoder 객체를 위한 Bean 등록 -->
+	<beans:bean id="bCryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+
+	<!-- 파일업로드에 필요한 라이브러리를 Bean으로 등록(업로드 최대용량 20MByte) -->
+	<beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<beans:property name="maxUploadSize" value="20971520" />
+		<beans:property name="defaultEncoding" value="utf-8" />
+	</beans:bean>
+
+	<!-- Interceptor 설정 -->
+	<beans:bean id="level0Interceptor" class="com.spring.javawspring.interceptor.Level0Interceptor" />
+	<beans:bean id="level2Interceptor" class="com.spring.javawspring.interceptor.Level2Interceptor" />
+	<beans:bean id="level3Interceptor" class="com.spring.javawspring.interceptor.Level3Interceptor" />
+	<beans:bean id="level4Interceptor" class="com.spring.javawspring.interceptor.Level4Interceptor" />
+	<interceptors>
+		<interceptor>
+			<mapping path="/admin/**"/>
+			<beans:ref bean="level0Interceptor" />
+		</interceptor>
+		<interceptor>
+			<mapping path="/member/**"/>
+			<mapping path="/webMessage/**"/>
+			<mapping path="/board/boardList"/>
+			<exclude-mapping path="/member/memberLogin"/>
+			<exclude-mapping path="/member/memberIdSearch"/>
+			<exclude-mapping path="/member/memberIdSearchRes"/>
+			<exclude-mapping path="/member/memberPwdSearch"/>
+			<exclude-mapping path="/member/memberLogout"/>
+			<exclude-mapping path="/member/memberJoin"/>
+			<exclude-mapping path="/member/memberIdCheck"/>
+			<exclude-mapping path="/member/memberNickNameCheck"/>
+			<exclude-mapping path="/member/memberList"/>
+			<exclude-mapping path="/member/memberPwdSearch"/>
+			<exclude-mapping path="/member/memberKakaoLogin"/>
+			<beans:ref bean="level4Interceptor" />
+		</interceptor>
+		<interceptor>
+		
+		<!-- 회원전용 -->
+			<mapping path="/study/**"/>
+			<mapping path="/dbShop/**"/>
+			<mapping path="/board/**"/>
+			<mapping path="/member/memberList"/>
+			<mapping path="/pds/pdsList"/>
+			<mapping path="/dbShop/dbShopMain"/>
+			<mapping path="/pds/pdsTotalDown"/>
+			<mapping path="/pds/pdsDownAction"/>
+			<exclude-mapping path="/board/boardList"/>
+			<!-- <exclude-mapping path="/pds/pdsInput"/> -->
+			<beans:ref bean="level3Interceptor" />
+		</interceptor>
+		<interceptor>
+			<mapping path="/pds/**"/>
+			<exclude-mapping path="/pds/pdsList"/>
+			<exclude-mapping path="/pds/pdsTotalDown"/>
+			<exclude-mapping path="/pds/pdsDownAction"/>
+			<beans:ref bean="level2Interceptor" />
+		</interceptor>
+	</interceptors>
+	
+	<!-- 트랜잭션을 어노테이션으로 처리하기위해 참조하는 클래스를 등록한다. -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	
+</beans:beans>
